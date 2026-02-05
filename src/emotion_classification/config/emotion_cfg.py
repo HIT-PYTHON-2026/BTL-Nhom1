@@ -1,0 +1,1 @@
+# KHAI BÁO THÔNG SỐ: KÍCH THƯỚC ẢNH, EPOCH, 
