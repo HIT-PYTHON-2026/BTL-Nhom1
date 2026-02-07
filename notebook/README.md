@@ -16,7 +16,59 @@ Mục tiêu của dự án là phát triển một hệ thống có khả năng 
 | 3    | Vũ Trang Ngân    | [Trang Ngân](https://www.facebook.com/nony.mous.77736)   |
 
 ## Cấu trúc thư mục
-![Project Structure](/image.png)
+[Project Structure](/notebook/ProjectStructure.md)
+```
+└── BTL-Nhom1
+    └── backend
+        └── app
+            └── config
+                ├── logging_cfg.py
+            └── logs
+                ├── http.log
+                ├── predictor.log
+            └── middleware
+                ├── __init__.py
+                ├── cors.py
+                ├── http.py
+            └── routers
+                ├── base.py
+                ├── emotion_router.py
+            └── schemas
+                ├── emotion_schema.py
+            └── utils
+                ├── logger.py
+        └── src
+            └── emotion_classification
+                └── __pycache__
+                └── config
+                    ├── emotion_cfg.py
+                └── models
+                    └── weights
+                        ├── emtion_classification_weights.pt
+                    ├── emotion_predictor.py
+                    ├── load_model.py
+                    ├── resnet_model.py
+                └── utils
+                    ├── processor.py
+                ├── __init__.py
+                ├── server.py
+        ├── requirements.txt
+    └── frontend
+        └── app_streamlit
+            ├── streamlit.py
+        ├── app.py
+        ├── requirements.txt
+    └── notebook
+        ├── README.md
+        ├── train_model.ipynb
+    └── tests
+        └── __pycache__
+        ├── __init__.py
+    ├── .gitignore
+    ├── .pdm-python
+    └── pyproject.toml
+```
+
 
 ## Các chức năng chính
 
