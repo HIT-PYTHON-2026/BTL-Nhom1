@@ -1,6 +1,5 @@
 ```
-└── 📁BTL-Nhom1
-    └── 📁__pycache__
+└── BTL-Nhom1
     └── 📁backend
         └── 📁app
             └── 📁config
@@ -48,7 +47,5 @@
         ├── __init__.py
     ├── .gitignore
     ├── .pdm-python
-    ├── image.png
-    ├── project_structure.png
     └── pyproject.toml
 ```
