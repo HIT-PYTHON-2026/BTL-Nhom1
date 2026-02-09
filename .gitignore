@@ -214,3 +214,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Model weights
+backend/src/emotion_classification/models/weights/*
