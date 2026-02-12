@@ -14,40 +14,36 @@ class Logger:
         self.log = logging.getLogger(name)
         self.get_logger(log_level, log_file)
         
-        def get_logger(self, log_level, log_file):
-            self.log.setLevel(log_level)
-            self._init_formatter()
-            if log_file is not None:
-                self._add_file_hander(AppPath.LOG_DIR / log_file)
-            else:
-                self._add_stream_hander()
+    def get_logger(self, log_level, log_file):
+        self.log.setLevel(log_level)
+        self._init_formatter()
+        if log_file is not None:
+            self._add_file_handler(AppPath.LOG_DIR / log_file)
+        else:
+            self._add_stream_handler()
+    
+    def _init_formatter(self):
+        self.formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         
-        def _init_formatter(self):
-            self.formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            
-        def _add_stream_hander(self):
-            stream_handler = logging.StreamHandler(sys.stdout)
-            stream_handler.setFormatter(self.formatter)
-            self.log.addHandler(stream_handler)
-            
-        def _add_file_hander(self, log_file):
-            file_handler = RotatingFileHandler(log_file, maxBytes=10000, backupCount=10)
-            file_handler.setFormatter(self.formatter)
-            self.log.addHandler(file_handler)
-            
-        def save_requests(self, image, image_name):
-            path_save = f"{AppPath.CAPTURED_DATA_DIR}/{image_name}"
-            self.log.info(f"Save image to {path_save}")
-            image.save(path_save)
-            
-        def log_model(self, predictor_name, predictor__alias):
-            self.log.info(f"Predictor name: {predictor_name} - Predictor alias: {predictor__alias}")
-            
-        def log_response(self, pred_prob, pred_id, pred_class):
-            self.log.info(f"Predicted ProbP: {pred_prob} - Predicted ID: {pred_id} - Predicted Class: {pred_class}")
-            
-            
-
-            
+    def _add_stream_handler(self):
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.setFormatter(self.formatter)
+        self.log.addHandler(stream_handler)
+        
+    def _add_file_handler(self, log_file):
+        file_handler = RotatingFileHandler(log_file, maxBytes=10000, backupCount=10)
+        file_handler.setFormatter(self.formatter)
+        self.log.addHandler(file_handler)
+        
+    def save_requests(self, image, image_name):
+        path_save = f"{AppPath.CAPTURED_DATA_DIR}/{image_name}"
+        self.log.info(f"Save image to {path_save}")
+        image.save(path_save)
+        
+    def log_model(self, predictor_name, predictor__alias):
+        self.log.info(f"Predictor name: {predictor_name} - Predictor alias: {predictor__alias}")
+        
+    def log_response(self, pred_prob, pred_id, pred_class):
+        self.log.info(f"Predicted Prob: {pred_prob} - Predicted ID: {pred_id} - Predicted class: {pred_class}")
