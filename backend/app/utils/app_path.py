@@ -1,7 +1,7 @@
 from pathlib import Path
 
 class AppPath:
-    BACKEND_DIR = Path(__file__).parent.parent
+    BACKEND_DIR = Path(__file__).parent.parent.parent
     
     LOG_DIR = BACKEND_DIR / "logs"
     

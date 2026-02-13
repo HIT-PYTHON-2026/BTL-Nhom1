@@ -3,9 +3,9 @@ import torch
 import torchvision
 
 from .resnet_model import ResNet18, ResidualBlock
-from config.emotion_cfg import EmotionDataConfig
-from app.utils import Logger, AppPath, save_cache
-from load_model import download_model
+from backend.src.emotion_classification.config.emotion_cfg import EmotionDataConfig
+from backend.app.utils import Logger, AppPath, save_cache
+from .load_model import download_model
 from torch.nn import functional as F
 from PIL import Image
 
@@ -67,10 +67,17 @@ class Predictor:
                 n_blocks_lst=EmotionDataConfig.N_BLOCK_LST,
                 n_classes=EmotionDataConfig.N_CLASSES
             )
-            weights_path = AppPath.BACKEND_DIR / 'src' / 'emotion_classification' / 'models' / 'weights' / 'emotion_classification_weights.pt'
-            state_dict = torch.load(weights_path, map_location=self.device)
-            self.model.load_state_dict(state_dict)
-            
+            weights_path = AppPath.BACKEND_DIR / 'src' / 'emotion_classification' / \
+                'models' / 'weights' / 'emotion_classification_weights.pt'
+
+            checkpoint = torch.load(
+                weights_path, map_location=self.device, weights_only=False)
+
+            if isinstance(checkpoint, dict):
+                self.model.load_state_dict(checkpoint)
+            else:
+                self.model.load_state_dict(checkpoint.state_dict())
+
             self.model.to(self.device)
             self.model.eval()
             LOGGER.log.info(f"Model loaded & eval mode: {self.model_name}")
