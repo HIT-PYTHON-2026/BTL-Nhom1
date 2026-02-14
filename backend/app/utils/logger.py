@@ -42,8 +42,8 @@ class Logger:
         self.log.info(f"Save image to {path_save}")
         image.save(path_save)
         
-    def log_model(self, predictor_name, predictor__alias):
-        self.log.info(f"Predictor name: {predictor_name} - Predictor alias: {predictor__alias}")
+    def log_model(self, predictor_name):
+        self.log.info(f"Predictor name: {predictor_name}")
         
     def log_response(self, pred_prob, pred_id, pred_class):
         self.log.info(f"Predicted Prob: {pred_prob} - Predicted ID: {pred_id} - Predicted class: {pred_class}")

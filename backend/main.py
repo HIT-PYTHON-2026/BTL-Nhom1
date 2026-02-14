@@ -3,8 +3,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from fastapi import FastAPI
-from backend.app.middleware import LogMiddleware, setup_cors
-from backend.app.routers.base import router
+from app.middleware import LogMiddleware, setup_cors
+from app.routers.base import router
 
 app = FastAPI()
 

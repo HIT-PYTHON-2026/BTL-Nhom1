@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
-class EmotionDataConfig:
+class EmotionDataConfig():
     N_CLASSES = 7
     IMG_SIZE = 48
     CLASSES = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Suprise']
@@ -15,6 +15,6 @@ class EmotionDataConfig:
     
 class ModelConfig:
     ROOT_DIR = Path(__file__).parent.parent
-    MODEL_NAME = 'resnet18'
+    MODEL_NAME = 'ResNet18'
     MODEL_WEIGHT = ROOT_DIR / 'models' / 'weights' / 'emotion_classification_weights.pt'
     DEVICE = 'cpu'
