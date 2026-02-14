@@ -6,7 +6,7 @@ class EmotionResponse(BaseModel):
     best_prob: float = -1.0
     predicted_id: int = -1
     predicted_class: str = ""
-    predicted_name: str = ""
+    predictor_name: str = ""
 
 # Định nghĩa pydatic model
 # file xu ly anh

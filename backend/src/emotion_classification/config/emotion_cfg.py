@@ -10,8 +10,8 @@ class EmotionDataConfig():
     ID2LABEL = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 4: 'Neutral', 5: 'Sad', 6: 'Suprise'}
     LABEL2ID = {'Angry': 0, 'Disgust': 1, 'Fear': 2, 'Happy': 3, 'Neutral': 4, 'Sad': 5, 'Suprise': 6}
     N_BLOCK_LST = [2, 2, 2, 2]
-    NORMALIZE_MEAN = {0.485, 0.456, 0.406}
-    NORMALIZE_STD = {0.229, 0.224, 0.225}
+    NORMALIZE_MEAN = [0.485, 0.456, 0.406]
+    NORMALIZE_STD = [0.229, 0.224, 0.225]
     
 class ModelConfig:
     ROOT_DIR = Path(__file__).parent.parent

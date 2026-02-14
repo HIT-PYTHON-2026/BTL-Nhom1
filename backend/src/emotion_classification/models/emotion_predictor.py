@@ -66,18 +66,18 @@ class Predictor:
                 n_blocks_lst=EmotionDataConfig.N_BLOCK_LST,
                 n_classes=EmotionDataConfig.N_CLASSES
             )
-            
+
             checkpoint = torch.load(
-                AppPath.MODEL_WEIGHT, # Đảm bảo AppPath đúng
+                AppPath.MODEL_WEIGHT,  # Đảm bảo AppPath đúng
                 map_location=self.device,
-                weights_only=False 
+                weights_only=False
             )
-            
+
             if isinstance(checkpoint, torch.nn.Module):
                 state_dict = checkpoint.state_dict()
             else:
                 state_dict = checkpoint
-              
+
             self.model.load_state_dict(state_dict, strict=False)
 
             self.model.to(self.device)
@@ -95,9 +95,13 @@ class Predictor:
         std = EmotionDataConfig.NORMALIZE_STD
 
         self.transforms_ = torchvision.transforms.Compose([
+            torchvision.transforms.Lambda(lambda x: x.convert('RGB')),
             torchvision.transforms.Resize((img_size, img_size)),
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean=mean, std=std)
+            torchvision.transforms.Normalize(
+                mean=mean,
+                std=std
+            )
         ])
 
     async def model_inference(self, input_tensor):
