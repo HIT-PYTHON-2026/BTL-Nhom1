@@ -15,9 +15,11 @@ def download_model():
         url = f'https://drive.google.com/uc?id={FILE_ID}'
         # 2. Thuc hien tai ve
         gdown.download(url, str(MODEL_WEIGHT), quiet=False, fuzzy=True)
-        print(f"Đã tải xong model: {MODEL_WEIGHT    }")
+        print(f"Downloaded: {MODEL_WEIGHT}")
+        return True
     else:
-        print(f"Model đã tồn tại, không cần tải lại.")
+        print(f"Model is already exsits.")
+        return False
 
 
 if __name__ == "__main__":
