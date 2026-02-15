@@ -20,7 +20,3 @@ def download_model():
     else:
         print(f"Model is already exsits.")
         return False
-
-
-if __name__ == "__main__":
-    download_model()

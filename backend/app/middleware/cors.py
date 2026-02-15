@@ -1,3 +1,14 @@
+from fastapi.middleware.cors import CORSMiddleware
+
+def setup_cors(app):
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
 # # Chứa cors api
 # Các thông số chính thường cấu hình trong file này bao gồm:
 

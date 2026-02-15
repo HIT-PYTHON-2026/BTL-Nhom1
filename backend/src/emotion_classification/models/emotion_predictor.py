@@ -3,8 +3,8 @@ import torch
 import torchvision
 
 from .resnet_model import ResNet18, ResidualBlock
-from backend.src.emotion_classification.config.emotion_cfg import EmotionDataConfig
-from backend.app.utils import Logger, AppPath, save_cache
+from src.emotion_classification.config.emotion_cfg import EmotionDataConfig
+from app.utils import Logger, AppPath, save_cache
 from .load_model import download_model
 from torch.nn import functional as F
 from PIL import Image
@@ -17,9 +17,9 @@ LOGGER.log.info('Starting Model Serving')
 
 
 class Predictor:
-    def __init__(self, model_name: str, model_alias: str, device: str = "cpu"):
+    def __init__(self, model_name: str, model_weight: str, device: str = "cpu"):
         self.model_name = model_name
-        self.model_alias = model_alias
+        self.model_weight = model_weight
         self.device = device
         self.load_model()
         self.create_transform()
@@ -36,7 +36,7 @@ class Predictor:
         probs, best_prob, predicted_id, predicted_class = self.output2pred(
             output)
 
-        LOGGER.log_model(self.model_name, self.model_alias)
+        LOGGER.log_model(self.model_name)
         LOGGER.log_response(best_prob, predicted_id, predicted_class)
 
         torch.cuda.empty_cache()
@@ -44,7 +44,7 @@ class Predictor:
             image_name,
             AppPath.CAPTURED_DATA_DIR,
             self.model_name,
-            self.model_alias,
+            self.model_weight,
             probs,
             best_prob,
             predicted_id,
@@ -56,33 +56,37 @@ class Predictor:
             "predicted_id": predicted_id,
             "predicted_class": predicted_class,
             "predictor_name": self.model_name,
-            "predictor_alias": self.model_alias
+            "predictor_weight": self.model_weight
         }
 
     def load_model(self):
-        download_model()
         try:
             self.model = ResNet18(
                 residual_block=ResidualBlock,
                 n_blocks_lst=EmotionDataConfig.N_BLOCK_LST,
                 n_classes=EmotionDataConfig.N_CLASSES
             )
-            weights_path = AppPath.BACKEND_DIR / 'src' / 'emotion_classification' / \
-                'models' / 'weights' / 'emotion_classification_weights.pt'
 
             checkpoint = torch.load(
-                weights_path, map_location=self.device, weights_only=False)
+                AppPath.MODEL_WEIGHT,  # Đảm bảo AppPath đúng
+                map_location=self.device,
+                weights_only=False
+            )
 
-            if isinstance(checkpoint, dict):
-                self.model.load_state_dict(checkpoint)
+            if isinstance(checkpoint, torch.nn.Module):
+                state_dict = checkpoint.state_dict()
             else:
-                self.model.load_state_dict(checkpoint.state_dict())
+                state_dict = checkpoint
+
+            self.model.load_state_dict(state_dict, strict=False)
 
             self.model.to(self.device)
             self.model.eval()
-            LOGGER.log.info(f"Model loaded & eval mode: {self.model_name}")
+
+            LOGGER.log.info(
+                f"Successfully loaded model: {self.model_name} from {self.model_weight}")
         except Exception as e:
-            LOGGER.log.error(f"Load model failed: {e}")
+            LOGGER.log.error(f"Fail to load model: {str(e)}")
             raise e
 
     def create_transform(self):
@@ -91,9 +95,13 @@ class Predictor:
         std = EmotionDataConfig.NORMALIZE_STD
 
         self.transforms_ = torchvision.transforms.Compose([
+            torchvision.transforms.Lambda(lambda x: x.convert('RGB')),
             torchvision.transforms.Resize((img_size, img_size)),
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean=mean, std=std)
+            torchvision.transforms.Normalize(
+                mean=mean,
+                std=std
+            )
         ])
 
     async def model_inference(self, input_tensor):
