@@ -19,8 +19,7 @@ class EmotionDataConfig():
 
 
 class ModelConfig:
-    ROOT_DIR = Path(__file__).parent.parent
+    ROOT_DIR = Path(__file__).parent.parent.parent
     MODEL_NAME = 'ResNet18'
-    MODEL_WEIGHT = ROOT_DIR / 'models' / 'weights' / \
-        'emotion_classification_weights.pt'
+    MODEL_WEIGHT = ROOT_DIR / 'models' / 'weights' /'emotion_classification_weights.pt'
     DEVICE = 'cpu'
