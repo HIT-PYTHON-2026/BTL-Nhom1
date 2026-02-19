@@ -62,7 +62,7 @@ class Predictor:
     def load_model(self):
         try:
             self.model = ResNet(
-                Block,[2,2,2,2],
+                Block, [2, 2, 2, 2],
                 num_classes=EmotionDataConfig.N_CLASSES
             )
 

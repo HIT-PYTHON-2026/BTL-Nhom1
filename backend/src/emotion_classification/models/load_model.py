@@ -1,6 +1,7 @@
 import gdown
 import sys
 import os
+from ultralytics import YOLO
 
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
@@ -23,3 +24,4 @@ def download_model():
         return False
 if __name__ == "__main__":
     download_model()
+    model = YOLO(BACKEND_DIR/'models'/'weights'/'yolov8n.pt')
