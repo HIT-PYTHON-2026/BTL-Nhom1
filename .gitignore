@@ -57,7 +57,7 @@ cover/
 
 # Django stuff:
 *.log
-app/logs/*.log*
+backend/app/logs/*.log*
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -219,4 +219,8 @@ __marimo__/
 # Model weights
 backend/src/emotion_classification/models/weights/*
 
-backend/cached/
+backend/cache/
+
+frontend/.gradio/
+
+*.csv

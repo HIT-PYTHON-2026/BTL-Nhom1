@@ -2,7 +2,7 @@ import sys
 import torch
 import torchvision
 
-from .resnet_model import ResNet18, ResidualBlock
+from .resnet_model import ResNet, Block
 from src.emotion_classification.config.emotion_cfg import EmotionDataConfig
 from app.utils import Logger, AppPath, save_cache
 from .load_model import download_model
@@ -61,10 +61,9 @@ class Predictor:
 
     def load_model(self):
         try:
-            self.model = ResNet18(
-                residual_block=ResidualBlock,
-                n_blocks_lst=EmotionDataConfig.N_BLOCK_LST,
-                n_classes=EmotionDataConfig.N_CLASSES
+            self.model = ResNet(
+                Block,[2,2,2,2],
+                num_classes=EmotionDataConfig.N_CLASSES
             )
 
             checkpoint = torch.load(
