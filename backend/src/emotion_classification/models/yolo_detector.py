@@ -1,3 +1,5 @@
+from pathlib import Path
+import io
 import sys
 import numpy as np
 import cv2
@@ -7,27 +9,32 @@ from typing import List, Tuple, Optional
 from PIL import Image
 from ultralytics import YOLO
 from src.emotion_classification.config.detect_cfg import YoloConfig
+from src.emotion_classification.config.emotion_cfg import EmotionDataConfig
 from app.utils import Logger, AppPath, save_cache
 from torchvision import transforms
+from .emotion_predictor import Predictor
+from .resnet_model import ResNet, Block
+Resnet = ResNet
 
-from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 LOGGER = Logger(__file__, log_file='detector.log')
 LOGGER.log.info('Starting Model Serving')
 
 
-class PersonDetector:
+class FacesDetector:
     def __init__(
         self,
         model_name: Optional[Path] = None,
-        model_weight: Optional[Path] = None,
+        model_weight: Optional[Path] = "src/emotion_classification/models/weights/yolov8n-face-lindevs.pt",
         conf_threshold: float = YoloConfig.YOLO_CONFIG_THRESHOLD,
         iou_threshold: float = YoloConfig.YOLO_IOU_THRESHOLD,
         device: str = "cpu"
     ):
         self.model_name = model_name
-        self.model_weight = model_weight
+        self.model_weight = Path(model_weight)
         self.conf_threshold = conf_threshold
         self.iou_threshold = iou_threshold
         self.device = device
@@ -36,35 +43,48 @@ class PersonDetector:
     def _load_model(self):
         try:
             if not self.model_weight.exists():
-                self.model = YOLO('yolov8n.pt')
+                self.model = YOLO('yolov8n-face-lindevs.pt')
                 self.model_weight.parent.mkdir(parents=True, exist_ok=True)
             else:
                 self.model = YOLO(str(self.model_weight))
 
             self.model.to(self.device)
-            LOGGER.log.info(
-                f"Successfully loaded model: {self.model_name} from {self.model_weight}")
+            # LOGGER.log.info(
+            #     f"Successfully loaded model: {self.model_name} from {self.model_weight}")
 
         except Exception as e:
-            LOGGER.log.error(f"Fail to load model: {str(e)}")
+            # LOGGER.log.error(f"Fail to load model: {str(e)}")
             raise RuntimeError(f"Failed to load YOLO model: {e}")
 
-    def detect_persons(self, image, image_name: str):
-        pil_img = Image.open(image)
-        LOGGER.save_requests(pil_img, image_name)
+    async def detect_faces(
+        self,
+        image,
+        image_name: str
+    ):
+        image = image.read()
+        pil_img = Image.open(io.BytesIO(image))
+
+        # if isinstance(image, bytes):
+        #     nparr = np.frombuffer(image, np.uint8)
+        #     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        # else:
+        #     image_bytes = await image.read()
+        #     nparr = np.frombuffer(image_bytes, np.uint8)
+        #     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        # # LOGGER.save_requests(pil_img, image_name)
 
         if pil_img.mode == "RGBA":
             pil_img = pil_img.convert("RGB")
 
         results = self.model.predict(
-            image,
+            pil_img,
             conf=self.conf_threshold,
             iou=self.iou_threshold,
             classes=[YoloConfig.YOLO_PERSON_CLASS_ID],
             verbose=False
         )
 
-        persons = []
+        faces = []
 
         if len(results) > 0:
             result = results[0]
@@ -75,26 +95,26 @@ class PersonDetector:
 
                 for box, conf in zip(boxes, confidences):
                     x1, y1, x2, y2 = map(int, box)
-                    persons.append((x1, y1, x2, y2, float(conf)))
+                    faces.append((x1, y1, x2, y2, float(conf)))
 
-        LOGGER.log_model(self.model_name)
-        LOGGER.log_response(x1, y1, x2, y2, float(conf))
+        # LOGGER.log_model(self.model_name)
+        # LOGGER.log_response(x1, y1, x2, y2, float(conf))
 
-        torch.cuda.empty_cache()
+        # torch.cuda.empty_cache()
 
-        return persons
+        return faces
 
     def visualize_detections(
         self,
         image: Image,
-        persons: List[Tuple[int, int, int, int, float]],
+        faces: List[Tuple[int, int, int, int, float]],
         color: Tuple[int, int, int] = (0, 255, 0),
         thickness: int = 2
     ) -> Image:
         transform = transforms.ToTensor()
         output = transform(image)
 
-        for i, (x1, y1, x2, y2, conf) in enumerate(persons):
+        for i, (x1, y1, x2, y2, conf) in enumerate(faces):
             cv2.rectangle(output, (x1, y1), (x2, y2), color, thickness)
 
             label = f"Person {i + 1}: {conf:.2f}"
@@ -121,65 +141,83 @@ class PersonDetector:
         return output
 
 
-def test_detector():
-    import cv2
-    import os
-    from datetime import datetime
-
+async def test_detector_realtime():
     print("="*60)
-    print("Testing YOLO Person Detector")
+    print("Testing YOLO Face Detector REALTIME")
     print("="*60)
 
-    detector = PersonDetector(model_weight=AppPath.YOLO_MODEL_WEIGHT)
+    detector = FacesDetector(model_weight=AppPath.YOLO_MODEL_WEIGHT)
+    predictor = Predictor(
+        model_name="ResNet18",
+        model_weight=AppPath.RESNET_MODEL_WEIGHT,
+        device="cpu"
+    )
 
-    save_dir = "captured_images"
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    face_buffer = []
+    last_label = "Initializing..."
+    batch_size = 5
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("Impossible open Camera")
+        print("Không thể mở Camera")
         return
 
-    print("Enter 's to cap, 'q' to escape")
-    file_path = ""
+    print("Nhấn 'q' để thoát")
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
-        cv2.imshow('Webcam', frame)
+        results = detector.model.predict(
+            frame,
+            conf=detector.conf_threshold,
+            iou=detector.iou_threshold,
+            classes=[YoloConfig.YOLO_PERSON_CLASS_ID],
+            verbose=False
+        )
 
-        key = cv2.waitKey(1) & 0xFF
+        if len(results) > 0:
+            result = results[0]
+            boxes = result.boxes.xyxy.cpu().numpy()
+            confidences = result.boxes.conf.cpu().numpy()
 
-        if key == ord('s'):
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_name = f"captured_{timestamp}.jpg"
+            for box, conf in zip(boxes, confidences):
+                x1, y1, x2, y2 = map(int, box)
+                cv2.rectangle(frame, (x1 - 50, y1 - 50),
+                              (x2 + 50, y2 + 50), (0, 255, 0), 2)
+                cv2.putText(frame, last_label, (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            file_path = os.path.join(save_dir, file_name)
+                face_img = frame[y1 - 50: y2 + 50, x1 - 50: x2 + 50]
 
-            cv2.imwrite(file_path, frame)
-            print(f"Đã lưu ảnh tại: {file_path}")
-        elif key == ord('q'):
+                if face_img.size > 0:
+                    face_img = Image.fromarray(face_img)
+                    predictor.create_transform()
+                    transform = predictor.transforms_
+                    face_tensor = transform(face_img)
+                    face_buffer.append(face_tensor)
+
+                    if len(face_buffer) == batch_size:
+                        input_batch = torch.stack(face_buffer).to(device)
+
+                        with torch.no_grad():
+                            outputs = predictor.model(input_batch)
+                            probs = torch.softmax(outputs, dim=1)
+                            avg_probs = torch.mean(probs, dim=0)
+                            max_idx = torch.argmax(avg_probs).item()
+                            last_label = f"{EmotionDataConfig.ID2LABEL[max_idx]} ({avg_probs[max_idx]*100:.1f}%)"
+
+                        face_buffer = []
+
+        cv2.imshow('Realtime Detection', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
     cv2.destroyAllWindows()
 
-    print(f"Running...")
-    persons = detector.detect_persons(file_path, "test.jpg")
-
-    print(f"{len(persons)} persons")
-
-    if len(persons) > 0:
-        for i, (x1, y1, x2, y2, conf) in enumerate(persons):
-            print(
-                f"    Person {i + 1}: bbox=({x1}, {y1}, {x2}, {y2}), confidence={conf:.3f}")
-
-    print("\n Yolo detection is working")
-    print("="*60)
-
-
 if __name__ == "__main__":
-    test_detector()
+    import asyncio
+    asyncio.run(test_detector_realtime())

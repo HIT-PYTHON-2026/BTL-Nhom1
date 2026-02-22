@@ -12,7 +12,7 @@ class AppPath:
     RESNET_MODEL_WEIGHT = BACKEND_DIR / "src" / 'emotion_classification' / \
         'models' / 'weights' / 'emotion_classification_weights.pt'
     YOLO_MODEL_WEIGHT = BACKEND_DIR / "src" / 'emotion_classification' / \
-        'models' / 'weights' / 'yolov8n.pt'
+        'models' / 'weights' / 'yolov8n-face-lindevs.pt'
 
 
 AppPath.LOG_DIR.mkdir(parents=True, exist_ok=True)

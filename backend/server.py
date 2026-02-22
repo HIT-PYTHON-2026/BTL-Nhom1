@@ -1,5 +1,5 @@
 import uvicorn
-from src.emotion_classification.models.resnet_model import ResNet, Block
+from src.emotion_classification.models.resnet_model import ResNet
 
 Resnet = ResNet
 
