@@ -5,7 +5,7 @@ import torchvision
 from .resnet_model import ResNet, Block
 from src.emotion_classification.config.emotion_cfg import EmotionDataConfig
 from app.utils import Logger, AppPath, save_cache
-from .load_model import download_model
+# from .load_model import download_model
 from torch.nn import functional as F
 from PIL import Image
 
@@ -62,12 +62,12 @@ class Predictor:
     def load_model(self):
         try:
             self.model = ResNet(
-                Block,[2,2,2,2],
+                Block, [2, 2, 2, 2],
                 num_classes=EmotionDataConfig.N_CLASSES
             )
 
             checkpoint = torch.load(
-                AppPath.MODEL_WEIGHT,  # Đảm bảo AppPath đúng
+                AppPath.RESNET_MODEL_WEIGHT,  # Đảm bảo AppPath đúng
                 map_location=self.device,
                 weights_only=False
             )
