@@ -64,14 +64,6 @@ class FacesDetector:
         image = image.read()
         pil_img = Image.open(io.BytesIO(image))
 
-        # if isinstance(image, bytes):
-        #     nparr = np.frombuffer(image, np.uint8)
-        #     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        # else:
-        #     image_bytes = await image.read()
-        #     nparr = np.frombuffer(image_bytes, np.uint8)
-        #     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        # # LOGGER.save_requests(pil_img, image_name)
 
         if pil_img.mode == "RGBA":
             pil_img = pil_img.convert("RGB")
@@ -104,41 +96,41 @@ class FacesDetector:
 
         return faces
 
-    def visualize_detections(
-        self,
-        image: Image,
-        faces: List[Tuple[int, int, int, int, float]],
-        color: Tuple[int, int, int] = (0, 255, 0),
-        thickness: int = 2
-    ) -> Image:
-        transform = transforms.ToTensor()
-        output = transform(image)
+    # def visualize_detections(
+    #     self,
+    #     image: Image,
+    #     faces: List[Tuple[int, int, int, int, float]],
+    #     color: Tuple[int, int, int] = (0, 255, 0),
+    #     thickness: int = 2
+    # ) -> Image:
+    #     transform = transforms.ToTensor()
+    #     output = transform(image)
 
-        for i, (x1, y1, x2, y2, conf) in enumerate(faces):
-            cv2.rectangle(output, (x1, y1), (x2, y2), color, thickness)
+    #     for i, (x1, y1, x2, y2, conf) in enumerate(faces):
+    #         cv2.rectangle(output, (x1, y1), (x2, y2), color, thickness)
 
-            label = f"Person {i + 1}: {conf:.2f}"
-            label_size, _ = cv2.getTextSize(
-                label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+    #         label = f"Person {i + 1}: {conf:.2f}"
+    #         label_size, _ = cv2.getTextSize(
+    #             label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
-            cv2.rectangle(
-                output,
-                (x1, y1 - label_size[1] - 10),
-                (x1 + label_size[0], y1),
-                color,
-                -1
-            )
+    #         cv2.rectangle(
+    #             output,
+    #             (x1, y1 - label_size[1] - 10),
+    #             (x1 + label_size[0], y1),
+        #         color,
+        #         -1
+        #     )
 
-            cv2.putText(
-                output,
-                label,
-                (x1, y1 - 5),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (255, 255, 255),
-                1
-            )
-        return output
+        #     cv2.putText(
+        #         output,
+        #         label,
+        #         (x1, y1 - 5),
+        #         cv2.FONT_HERSHEY_SIMPLEX,
+        #         0.5,
+        #         (255, 255, 255),
+        #         1
+        #     )
+        # return output
 
 
 async def test_detector_realtime():

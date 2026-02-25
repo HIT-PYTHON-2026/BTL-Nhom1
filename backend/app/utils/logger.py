@@ -48,10 +48,10 @@ class Logger:
     def log_model(self, predictor_name):
         self.log.info(f"Predictor name: {predictor_name}")
 
-    def log_response(self, pred_prob, pred_id, pred_class):
+    def log_cls_response(self, pred_prob, pred_id, pred_class):
         self.log.info(
             f"Predicted Prob: {pred_prob} - Predicted ID: {pred_id} - Predicted class: {pred_class}")
 
-    def log_response(self, x1, y1, x2, y2, confidence):
+    def log_det_response(self, x1, y1, x2, y2, confidence):
         self.log.info(
             f"Detected: Box([{x1}, {y1}, {x2}, {y2}]) Conf: {confidence}")

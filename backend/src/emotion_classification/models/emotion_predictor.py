@@ -37,7 +37,7 @@ class Predictor:
             output)
 
         LOGGER.log_model(self.model_name)
-        LOGGER.log_response(best_prob, predicted_id, predicted_class)
+        LOGGER.log_cls_response(best_prob, predicted_id, predicted_class)
 
         torch.cuda.empty_cache()
         save_cache(
