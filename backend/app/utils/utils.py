@@ -6,6 +6,6 @@ def save_cache(image_name, image_path, predictor_name, predictor_weight, probs, 
     cache_exists = os.path.isfile(cache_path)
     with open(cache_path, "a") as f:
         if not cache_exists:
-            f.write("Image_name, Image_pat, Predictor_name, Probabilities, Best_prob, Predicted_id, Predicted_class\n")
-        f.write(f"{image_name},{image_path},{predictor_name},{probs},{best_prob},{pred_id},{pred_class}")
+            f.write("Image_name,Image_path,Predictor_name,Predictor_weight,Probabilities,Best_prob,Predicted_id,Predicted_class\n")
+        f.write(f"{image_name},{image_path},{predictor_name},{predictor_weight},{probs},{best_prob},{pred_id},{pred_class}\n")
         

@@ -1,13 +1,14 @@
-from src.emotion_classification.models.emotion_predictor import Predictor
-from src.emotion_classification.models.yolo_detector import FacesDetector
-from src.emotion_classification.config.emotion_cfg import ModelConfig
-from schemas.emotion_schema import EmotionResponse
-from schemas.face_schema import FaceResponse
-from fastapi import APIRouter
-from fastapi import File, UploadFile
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
+
+from src.emotion_classification.models.emotion_predictor import Predictor
+from src.emotion_classification.models.yolo_detector import FacesDetector
+from src.emotion_classification.config.emotion_cfg import ModelConfig
+from app.schemas.emotion_schema import EmotionResponse
+from app.schemas.face_schema import FaceResponse
+from fastapi import APIRouter
+from fastapi import File, UploadFile
 
 
 router = APIRouter()

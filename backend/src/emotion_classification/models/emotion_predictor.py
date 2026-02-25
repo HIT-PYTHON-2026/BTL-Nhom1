@@ -55,15 +55,15 @@ class Predictor:
             "best_prob": best_prob,
             "predicted_id": predicted_id,
             "predicted_class": predicted_class,
-            "predictor_name": self.model_name,
-            "predictor_weight": self.model_weight
+            "predictor_name": self.model_name
         }
 
     def load_model(self):
         try:
             self.model = ResNet(
                 Block, [2, 2, 2, 2],
-                num_classes=EmotionDataConfig.N_CLASSES
+                num_classes=EmotionDataConfig.N_CLASSES,
+                parameter_dropout = 0.3
             )
 
             checkpoint = torch.load(
