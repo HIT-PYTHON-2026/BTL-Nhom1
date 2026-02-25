@@ -1,124 +1,103 @@
-# Bài toán phân loại cảm xúc - Emotion classification
+# Tiền xử lý và tăng cường dữ liệu (Data Augmentation)
+Data train:
++ Random Resized Crop: Cắt ngẫu nhiên một phần ảnh và resize về kích thước tiêu chuẩn (224x224). Giúp mô hình nhận diện được các đặc điểm khuôn mặt ngay cả khi không nằm chính giữa khung hình.
++ Random Horizontal Flip: Lật ảnh ngang (tỉ lệ 50%) để xử lý sự đối xứng của khuôn mặt.
++ Color Jitter (p=0.8): Điều chỉnh ngẫu nhiên độ sáng, độ tương phản, độ bão hòa và sắc thái. Điều này giúp mô hình chống chọi với các điều kiện ánh sáng khác nhau.
++ Random Grayscale (p=0.2): Chuyển ảnh sang đen trắng giúp mô hình tập trung vào hình thái (shapes) thay vì quá phụ thuộc vào màu sắc.
++ Random Rotation (20°): Xoay ảnh một góc tối đa 20 độ để mô phỏng các tư thế nghiêng đầu.
++ Normalization: Chuẩn hóa theo ImageNet mean và std:
+	+ Mean: [0.485, 0.456, 0.406]
+	+ Std: [0.229, 0.224, 0.225]
++ Random Erasing (p=0.25): Xóa ngẫu nhiên một vùng nhỏ trên ảnh. Kỹ thuật này buộc mô hình phải học từ các phần khác nhau của khuôn mặt (ví dụ: nhận diện qua mắt khi miệng bị che).
 
-## Giới thiệu bài toán
-Phân loại cảm xúc qua hình ảnh là quá trình sử dụng các thuật toán máy tính để nhận diện biểu cảm khuôn mặt và gán chúng vào các trạng thái tâm lý tương ứng. Đây là bài toán kết hợp giữa xử lý ảnh và học sâu (Deep Learning).
+Data test:
++ Resize: Đưa về cùng kích thước (224x224) với data train.
++ Normalization: Sử dụng cùng bộ thông số chuẩn hóa với tập huấn luyện.
+Cấu hình DataLoader
++ Batch Size: 32 (Có thể điều chỉnh tùy theo bộ nhớ GPU).
++ Num Workers: 4 (Sử dụng đa luồng để tăng tốc độ load dữ liệu).
++ Pin Memory: Được kích hoạt để tăng tốc độ truyền dữ liệu từ CPU lên GPU.
 
-## Mục tiêu Bài toán
+# Model Resnet18
+Tổng quan (overview):
+conv3x3: Là lớp tích chập được xây dựng để tái sử dụng lại nhiều lần
+Block: Đơn vị cơ bản của ResNet, chứa các Skip Connection giúp truyền tín hiệu trực tiếp qua các lớp
+Resnet: Là class khai báo và xây dựng cấu trúc của 1 mạng neutral network (ở đây là 1 mạng gần giống resnet18)
+Resnet18: Là hàm khai báo mạng neutral network (có 2 tham số)
++ num_classes: Số lượng nhãn của model (7: Angry, Disgust, Fear, Happy, Neutral, Sad, Surprise)
++ parameter_dropout: Tham số truyền vào layer dropout ở output layer (classification head)
+Các layer được sử dụng:
++ Convolution layer: Tìm cách đặc trưng trong ảnh
++ batch normalization: Vì output của layer này là input của layer tiếp theo nên mỗi khi weight của layer trước thay đổi dẫn đến output của nó cũng thay đổi (nó như phản ứng dây truyền) vậy nên bn1 xuất hiện với nhiệm vụ giúp model hội tụ nhanh hơn, ổn định hơn, chống overfitting
++ Activation layer (còn đgl Activations functions) (ReLU): Thay thế các đặc trưng xấu (bé hơn 0) bằng 0
++ Pooling layer: Có tác dụng giảm kích thước ảnh, giảm số lượng tham số cho model, ổn định hóa các đặc trưng (giữ lại các đặc trưng chính và giảm các chi tiết không cần thiết cho các layer tiếp theo)
+	+ MaxPooling: Tìm các đặc trưng nổi bật (Trả về giá trị lớn nhất của 1 vùng kernel)
+	+ AvgPooling: Giảm độ nhiễu của ảnh và làm mượt các đặc trưng bằng cách lấy giá trị trung bình, giúp tổng hợp thông tin toàn cục trước khi đưa vào lớp phân loại (Trả về giá trị 	trung bình cộng của 1 vùng kernel)
++ Dropout layer(p): Random (p * 100%) phần tử input thành 0 nhằm tránh hiện tượng model học thuộc data train
++ Fully connected layer: Thực hiện phép nhân ma trận để kết hợp các đặc trưng bậc cao đã học được thành các điểm số tương ứng cho từng nhãn
 
-Mục tiêu của dự án là phát triển một hệ thống có khả năng tự động trích xuất đặc trưng khuôn mặt và phân loại cảm xúc từ hình ảnh/video đầu vào. Bên cạnh đó, dự án còn là cơ hội để nhóm sinh viên nghiên cứu và làm chủ các kiến thức chuyên sâu về Deep Learning, xử lý ảnh, quy trình phát triển phần mềm và tư duy giải quyết vấn đề.
+Cấu trúc chi tiết:
++ Block(padding = 1): 
+input(x) -> conv1 -> bn1 -> relu -> conv2 -> bn2 -> output
+final output: relu(Downsample(x) + output) (skip connection: Giúp giải quyết vấn đề triệt tiêu đạo hàm (vanishing gradient) trong các mạng có cấu trúc phức tạp)
++ Downsample: Làm cho ảnh input(x) có kích thước và số channels bằng output (Dowsample sẽ xuất hiện tại Block[0] tại layer["2","3","4"])(intput(x) -> conv1 -> bn1 -> )
 
-## Nhóm thực hiện: Nhóm 1
+Resnet: input(batch, 224,224,3)
++ The Stem (conv, bn, relu, maxpool) output: (batch,56,56,64)
+  + conv(outputchannels(số lượng kernel) = 64,kernel_size = 7, stride = 2, padding = 3): Tìm các đặc trưng cơ bản như: góc, cạnh (output: (batch,112,112,64))
+	+ bn(64): 
+	+ relu:
+	+ maxpooling: output: (batch, 56,56,64)
++ Residual: 
+  + layer 1:
+		+ Block[0](outchannels = 64, stride = 1): output: (batch,56,56,64)
+		+ Block[1](outchannels = 64, stride = 1): output: (batch,56,56,64)
+	+ layer 2:
+	  + Block[0](outchannels = 128, stride = 2): output: (batch,28,28,128)
+		+ Block[1](outchannels = 128, stride = 1): output: (batch,28,28,128)
+	+ layer 3: 
+	  + Block[0](outchannels = 256, stride = 2): output: (batch,14,14,256)
+		+ Block[1](outchannels = 256, stride = 1): output: (batch,14,14,256)
+	+ layer 4: 
+	  + Block[0](outchannels = 512, stride = 2): output: (batch,7,7,512)
+		+ Block[1](outchannels = 512, stride = 1): output: (batch,7,7,512)
++ AvgPooling(output(1,1)): output: (batch, 1,1,512)
++ Flatten : chuyển đổi tensor đa chiều (batch, 1, 1, 512) thành vector 1 chiều (batch, 1 * 1 * 512) để làm đầu vào cho lớp FC: output: (batch,512)
++ Classification head (dropout,Linear(Fully connected)):
+  + dropout: Tắt ngẫu nhiên (p * 100%) trong số các đặc trưng
+	+ linear: Tổng hợp các đặc trưng để đưa ra đầu ra là các Logits (điểm số thô), 7 giá trị Logits này sau đó sẽ được đưa qua hàm Softmax (thường tích hợp trong Loss function) để chuyển đổi thành xác suất dự báo cho 7 nhãn cảm xúc 
 
-| STT  | Họ tên           | Facebook                                                 |
-| :--- | :--------------- | :------------------------------------------------------- |
-| 1    | Trần Văn Sơn     | [Sơn Trần](https://www.facebook.com/son.tran.384324)     |
-| 2    | Hoàng Thanh Diệu | [Diệu Hoàng](https://www.facebook.com/dieu.hoang.12457/) |
-| 3    | Vũ Trang Ngân    | [Trang Ngân](https://www.facebook.com/nony.mous.77736)   |
+# Train loop
 
-## Cấu trúc thư mục
-[Project Structure](/notebook/ProjectStructure.md)
-```
-└── BTL-Nhom1
-    └── backend
-        └── app
-            └── config
-                ├── logging_cfg.py
-            └── logs
-                ├── http.log
-                ├── predictor.log
-            └── middleware
-                ├── __init__.py
-                ├── cors.py
-                ├── http.py
-            └── routers
-                ├── base.py
-                ├── emotion_router.py
-            └── schemas
-                ├── emotion_schema.py
-            └── utils
-                ├── logger.py
-        └── src
-            └── emotion_classification
-                └── __pycache__
-                └── config
-                    ├── emotion_cfg.py
-                └── models
-                    └── weights
-                        ├── emtion_classification_weights.pt
-                    ├── emotion_predictor.py
-                    ├── load_model.py
-                    ├── resnet_model.py
-                └── utils
-                    ├── processor.py
-                ├── __init__.py
-                ├── server.py
-        ├── requirements.txt
-    └── frontend
-        └── app_streamlit
-            ├── streamlit.py
-        ├── app.py
-        ├── requirements.txt
-    └── notebook
-        ├── README.md
-        ├── train_model.ipynb
-    └── tests
-        └── __pycache__
-        ├── __init__.py
-    ├── .gitignore
-    ├── .pdm-python
-    └── pyproject.toml
-```
+Quy trình hyperparameter_tuning: Sau bước tiền xử lý, hệ thống thực hiện tìm kiếm bộ tham số tối ưu thông qua framework Optuna kết hợp với kiến trúc ResNet18.
+| Hyperparameter | Phạm vi | Kiểu dữ liệu |
+| :--- | :--- | :--- |
+| parameter_dropout | 0.3 - 0.5 | float |
+| learning rate | 1e-6 - 1e-3 | float |
+| label smoothing | 0.1 - 0.2 | float |
+| weight decay |1e-6 - 1e-3 | float |
+  + n_startup_trials (5): Chạy ít nhất 5 trials đầu tiên đầy đủ để có dữ liệu cơ sở.
+  + n_warmup_steps (25): Mỗi trial phải chạy ít nhất 25 epochs trước khi bị xem xét dừng sớm.
+  + interval_steps(3): Thực hiện so sánh sau mỗi 3 epoch sau khi vượt qua n_warmup_steps
 
+Sử dụng SQLite (.db) để lưu trữ lịch sử các lần thử nghiệm
+  + Cơ chế tự động copy database từ /input sang /working trên Kaggle giúp duy trì trạng thái huấn luyện ngay cả khi phiên làm việc bị ngắt quãng (load_if_exists=True).
+  + Best Model: best_model_trial_{n}.pth - Lưu lại trọng số của mô hình đạt độ chính xác cao nhất trong mỗi trial.
+  + Optuna Study: File optuna_study.db chứa toàn bộ lịch sử biến thiên của accuracy theo các bộ tham số.
 
-## Các chức năng chính
+Hàm loss(Hàm mất mát): Cross Entropy Loss
++ Thay vì ép mô hình hội tụ tuyệt đối vào nhãn đúng, label smoothing phân phối một phần nhỏ xác suất sang các nhãn khác, giúp mô hình không bị overconfident, giảm thiểu Overfitting và giúp mô hình thích nghi tốt hơn với những ảnh có biểu cảm không rõ ràng.
 
-### Chức năng chính cho người dùng
-> * Tải ảnh/Sử dụng Camera
-> * Phân tích cảm xúc tức thời
-> * Lịch sử phân tích
-> * Gợi ý dựa trên cảm xúc
-> * Chia sẻ kết quả 
+Hàm Tối ưu: AdamW
++ Sử dụng weight decay giúp các trọng số của ResNet18 nhỏ hơn, mượt hơn, từ đó cải thiện khả năng tổng quát hóa trên tập Test một cách đáng kể.
 
-### Chức năng quản trị viên (Nếu có)
-> * Quản lý bộ dữ liệu
-> * Giám sát hiệu năng mô hình
-> * Quản lý phiên bản mô hình
-> * Thống kê hệ thống
-> * Phê duyệt phản hồi
+Cosine Annealing Scheduler: Điều khiển learning rate
++ Learning rate không cố định mà biến thiên theo hàm Cosine trong suốt 100 epochs
++ Learning rate giảm dần theo đường cong Cosine về gần mức 0,giúp mô hình "thăm dò" kỹ lưỡng vùng cực tiểu toàn cục, tránh hiện tượng nhảy vọt qua điểm tối ưu ở những epoch cuối
 
-## Demo sản phẩm
-
--  Người dùng:
-----------------
-> * Tải ảnh
-
-![](/image.png)
- 
-
- -  Quản trị viên:
-----------------
-> * Tải ảnh
-
-![](/image.png)
-
- ## Các ngôn ngữ, công nghệ sử dụng
- > * Ngôn ngữ sử dụng: `Python`
- > * IDE sử dụng: `Visual Studio Code`
- > * Thư viện Deep Learning: `PyTorch`, `NumPy`, `Matplotlib`
- > * Thư viện xử lý hình ảnh: `Torchvision Transforms`
- > * Công cụ lập trình giao diện: `Streamlit`
- > * Công cụ quản lý môi trường và thư viện: `Conda`
- > * Công cụ quản lý phiên bản: `Git`
- > * Công cụ quản lý mã nguồn: `Github`
-
-## Hướng dẫn cài đặt chương trình
-> * **Bước 1:** Clone project [Emotion_Classification](https://github.com/HIT-PYTHON-2026/BTL-Nhom1.git)
-> * **Bước 2:** Tạo và kích hoạt môi trường ảo `python -m venv venv`
-> * **Bước 3:** Cài đặt các thư viện cần thiết từ file cấu hình: `pip install -r requirements.txt`
-> * **Bước 4:** Sau đó di chuyển vào thư mục dự án: `cd frontend`
-> * **Bước 5:** Bước 5: Khởi chạy ứng dụng: `python app.py`
-> * ***Note:*** Xem file hướng dẫn cài đặt để hiểu rõ thêm: [File hướng dẫn chi tiết](https://docs.google.com/document/d/1o6tw7wAYEVP2A2WoEZ1EYq1Wg9a530sO8681uQ7o4z4/edit?usp=sharing)
-
-## Tài liệu tham khảo
-
-- [Các phương pháp đánh giá một hệ thống phân lớp](https://machinelearningcoban.com/2017/08/31/evaluation/)
+Quy trình Vòng lặp Huấn luyện (Train Loop)
++ Chế độ Train: Kích hoạt model.train(), áp dụng Dropout và tính toán Gradient.
++ Cập nhật Optimizer và Scheduler: Thực hiện optimizer.step() sau mỗi batch và scheduler.step() sau mỗi epoch.
++ Đánh giá (Evaluation): Chuyển sang model.eval() và torch.no_grad() để đo đạc độ chính xác khách quan nhất trên tập Test.
++ Lưu trữ Trọng số: Chỉ lưu lại file .pth khi test_acc vượt qua giá trị cao nhất cũ (max1), đảm bảo bạn luôn có "phiên bản tốt nhất" của trial đó.
++ Cắt tỉa (Pruning): trial.should_prune() sẽ theo dõi test_acc. Nếu sau 25 epochs (warmup) mà kết quả không khả quan so với các trial khác, nó sẽ bị dừng ngay lập tức để tiết kiệm tài nguyên GPU.

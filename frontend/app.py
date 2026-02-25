@@ -17,7 +17,7 @@ ID2CLASS = {0: 'Angry', 1: 'Disgust', 2: 'Fear',
 def predict_api(image_path):
     try:
         image = Image.open(image_path)
-        img_name = image_path.split("/")[-1]
+        img_name = os.path.basename(image_path)
         img_byte_arr = io.BytesIO()
         image.save(img_byte_arr, format='JPEG')
         img_byte_arr = img_byte_arr.getvalue()
