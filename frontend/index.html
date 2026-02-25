@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion AI — Trang chủ</title>
+    <meta name="description" content="Ứng dụng nhận diện và phân loại cảm xúc bằng AI">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/home.css">
+</head>
+
+<body>
+
+    <!-- Floating Particles Background -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Header -->
+    <header class="home-header">
+        <div class="home-brand">
+            <div class="home-brand-icon">🧠</div>
+            <div class="home-brand-text">
+                <h1>Emotion AI</h1>
+                <p>Nhận diện cảm xúc thông minh</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="home-hero">
+        <h2>Chào mừng đến với Emotion AI</h2>
+        <p>Khám phá sức mạnh của trí tuệ nhân tạo trong việc nhận diện và phân loại cảm xúc qua hình ảnh khuôn mặt.
+            Hãy chọn tính năng bạn muốn trải nghiệm!</p>
+    </section>
+
+    <!-- Feature Cards -->
+    <main class="features-grid">
+
+        <!-- Card 1: Emotion Classification -->
+        <a href="dashboard.html" class="feature-card feature-card--classify" id="card-classify">
+            <div class="feature-icon">📸</div>
+            <h3 class="feature-title">Phân loại cảm xúc</h3>
+            <p class="feature-desc">
+                Tải ảnh khuôn mặt lên để AI phân tích và nhận diện cảm xúc.
+                Hỗ trợ 7 loại cảm xúc: vui, buồn, tức giận, sợ hãi, ghê tởm, ngạc nhiên và trung tính.
+            </p>
+            <div class="feature-tags">
+                <span class="feature-tag">🤖 Deep Learning</span>
+                <span class="feature-tag">📊 7 cảm xúc</span>
+                <span class="feature-tag">📷 Webcam</span>
+            </div>
+            <button class="feature-btn">
+                Bắt đầu phân tích
+                <span class="arrow">→</span>
+            </button>
+        </a>
+
+        <!-- Card 2: Emotion Express Game -->
+        <a href="game.html" class="feature-card feature-card--game" id="card-game">
+            <div class="feature-icon">🎮</div>
+            <h3 class="feature-title">Emotion Express</h3>
+            <p class="feature-desc">
+                Chơi trò chơi vượt chướng ngại vật bằng cảm xúc!
+                Thể hiện nét mặt đúng để vượt qua các cổng và chinh phục các vòng thử thách.
+            </p>
+            <div class="feature-tags">
+                <span class="feature-tag">🚂 Mini Game</span>
+                <span class="feature-tag">😄 3 cảm xúc</span>
+                <span class="feature-tag">🏆 Nhiều vòng</span>
+            </div>
+            <button class="feature-btn">
+                Chơi ngay
+                <span class="arrow">→</span>
+            </button>
+        </a>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="home-footer">
+        <p>© 2026 Emotion AI — BTL Nhóm 1 | HIT - PYTHON</p>
+    </footer>
+
+    <!-- Particles Script -->
+    <script>
+        (function () {
+            const container = document.getElementById('particles');
+            const count = 20;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = (6 + Math.random() * 10) + 's';
+                p.style.animationDelay = (Math.random() * 8) + 's';
+                p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+                container.appendChild(p);
+            }
+        })();
+    </script>
+
+</body>
+
+</html>

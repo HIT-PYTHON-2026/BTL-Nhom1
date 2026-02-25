@@ -13,17 +13,98 @@ const scoreDisplay = document.getElementById('scoreDisplay');
 const emotionDisplay = document.getElementById('emotionDisplay');
 
 // ============================================================
-// MOCK API — Replace with real backend call in production
+// REALTIME EMOTION DETECTION via WebSocket
 // ============================================================
-/**
- * Placeholder for emotion detection.
- * Future: capture video frame → POST /v1/emotion_classification/predict
- *         → map predicted_class to one of the 3 emotions.
- * @returns {string} 'sad' | 'happy' | 'surprised'
- */
-function getCurrentEmotion() {
-    const emotions = ['sad', 'happy', 'surprised'];
-    return emotions[Math.floor(Math.random() * emotions.length)];
+const _wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_URL = `${_wsProto}//${window.location.host}/v1/emotion_classification/game-ws`;
+const FRAME_SEND_INTERVAL = 500; // ms giữa mỗi lần gửi frame
+
+let emotionWS = null;
+let frameSendTimer = null;
+let faceDetected = false;
+
+// Canvas ẩn để chụp frame từ webcam
+const captureCanvas = document.createElement('canvas');
+const captureCtx = captureCanvas.getContext('2d');
+
+function connectEmotionWS() {
+    if (emotionWS && emotionWS.readyState === WebSocket.OPEN) return;
+
+    emotionWS = new WebSocket(WS_URL);
+
+    emotionWS.onopen = () => {
+        console.log('[EmotionWS] Connected');
+        startSendingFrames();
+    };
+
+    emotionWS.onmessage = (event) => {
+        try {
+            const result = JSON.parse(event.data);
+            faceDetected = result.face_detected;
+
+            if (result.face_detected && result.emotion) {
+                S.detected = result.emotion;
+                emotionDisplay.textContent = `${result.raw_label} (${(result.confidence * 100).toFixed(0)}%)`;
+            } else if (result.face_detected && !result.emotion) {
+                // Mặt detected nhưng emotion không map sang game (Angry, Neutral, etc.)
+                S.detected = '---';
+                emotionDisplay.textContent = result.raw_label || '---';
+            } else {
+                // Không thấy mặt
+                S.detected = '---';
+                emotionDisplay.textContent = 'Không thấy mặt';
+            }
+        } catch (e) {
+            console.warn('[EmotionWS] Parse error:', e);
+        }
+    };
+
+    emotionWS.onclose = () => {
+        console.log('[EmotionWS] Disconnected');
+        stopSendingFrames();
+        // Auto-reconnect nếu game đang chạy
+        if (S.running) {
+            setTimeout(connectEmotionWS, 2000);
+        }
+    };
+
+    emotionWS.onerror = (err) => {
+        console.warn('[EmotionWS] Error:', err);
+    };
+}
+
+function disconnectEmotionWS() {
+    stopSendingFrames();
+    if (emotionWS) {
+        emotionWS.onclose = null; // tránh auto-reconnect
+        emotionWS.close();
+        emotionWS = null;
+    }
+}
+
+function startSendingFrames() {
+    stopSendingFrames();
+    frameSendTimer = setInterval(sendFrame, FRAME_SEND_INTERVAL);
+}
+
+function stopSendingFrames() {
+    if (frameSendTimer) {
+        clearInterval(frameSendTimer);
+        frameSendTimer = null;
+    }
+}
+
+function sendFrame() {
+    if (!emotionWS || emotionWS.readyState !== WebSocket.OPEN) return;
+    if (!video.videoWidth || !video.videoHeight) return;
+
+    // Resize xuống nhỏ để gửi nhanh hơn
+    captureCanvas.width = 320;
+    captureCanvas.height = 240;
+    captureCtx.drawImage(video, 0, 0, 320, 240);
+
+    const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.6);
+    emotionWS.send(dataUrl);
 }
 
 // ============================================================
@@ -37,13 +118,12 @@ const CFG = {
     trainYRatio: 0.72,
     checkStart: 0.55,
     checkEnd: 0.87,
-    checkInterval: 50,   // frames between emotion checks
     spawnDelay: 1800,     // ms before next gate appears
 };
 
 const GATES = [
-    { emotion: 'sad',       emoji: '😢', label: 'SAD',       color: '#42A5F5' },
-    { emotion: 'happy',     emoji: '😃', label: 'HAPPY',     color: '#FFCA28' },
+    { emotion: 'sad', emoji: '😢', label: 'SAD', color: '#42A5F5' },
+    { emotion: 'happy', emoji: '😃', label: 'HAPPY', color: '#FFCA28' },
     { emotion: 'surprised', emoji: '😮', label: 'SURPRISED', color: '#AB47BC' },
 ];
 
@@ -355,26 +435,21 @@ function updateGate() {
     // in check zone?
     if (mid >= S.zoneTop && mid <= S.zoneBot) {
         g.inZone = true;
-        S.checkTick++;
-        if (S.checkTick % CFG.checkInterval === 1) {
-            const em = getCurrentEmotion();
-            S.detected = em;
-            emotionDisplay.textContent = em.toUpperCase();
 
-            if (em === g.def.emotion) {
-                // MATCHED
-                g.done = true;
-                S.passed++;
-                S.shake = 10;
-                scoreDisplay.textContent = `${S.passed} / 3`;
-                burst(S.cx, g.y + S.gateH / 2, g.def.color, 45);
+        // Kiểm tra emotion match (chỉ khi đã detect được mặt và có emotion hợp lệ)
+        if (faceDetected && S.detected === g.def.emotion) {
+            // MATCHED
+            g.done = true;
+            S.passed++;
+            S.shake = 10;
+            scoreDisplay.textContent = `${S.passed} / 3`;
+            burst(S.cx, g.y + S.gateH / 2, g.def.color, 45);
 
-                if (S.passed >= 3) {
-                    setTimeout(victory, 1200);
-                } else {
-                    S.gateIdx++;
-                    setTimeout(spawnGate, CFG.spawnDelay);
-                }
+            if (S.passed >= 3) {
+                setTimeout(victory, 1200);
+            } else {
+                S.gateIdx++;
+                setTimeout(spawnGate, CFG.spawnDelay);
             }
         }
     } else {
@@ -385,7 +460,6 @@ function updateGate() {
     if (g.y > canvas.height + 60 && !g.done) {
         g.y = -80;
         g.inZone = false;
-        S.checkTick = 0;
     }
 }
 
@@ -397,6 +471,7 @@ let confettiAnim = null;
 
 function victory() {
     S.running = false; S.over = true;
+    disconnectEmotionWS();
     hudEl.classList.add('hidden');
     victoryOverlay.classList.remove('hidden');
     spawnConfetti();
@@ -473,12 +548,20 @@ function startGame() {
     victoryOverlay.classList.add('hidden');
     hudEl.classList.remove('hidden');
     scoreDisplay.textContent = '0 / 3';
-    emotionDisplay.textContent = '---';
+    emotionDisplay.textContent = 'Đang kết nối...';
     if (confettiAnim) cancelAnimationFrame(confettiAnim);
+
+    // Kết nối WebSocket emotion detection
+    connectEmotionWS();
 
     S.running = true;
     setTimeout(spawnGate, 800);
     gameLoop();
+}
+
+function stopGame() {
+    S.running = false;
+    disconnectEmotionWS();
 }
 
 document.getElementById('startBtn').addEventListener('click', startGame);

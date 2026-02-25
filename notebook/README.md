@@ -29,7 +29,7 @@ Resnet18: Là hàm khai báo mạng neutral network (có 2 tham số)
 Các layer được sử dụng:
 + Convolution layer: Tìm cách đặc trưng trong ảnh
 + batch normalization: Vì output của layer này là input của layer tiếp theo nên mỗi khi weight của layer trước thay đổi dẫn đến output của nó cũng thay đổi (nó như phản ứng dây truyền) vậy nên bn1 xuất hiện với nhiệm vụ giúp model hội tụ nhanh hơn, ổn định hơn, chống overfitting
-+ Activation layer (còn đgl Activations functions) (ReLU): Thay thế các đặc trưng xấu (bé hơn 0) bằng 0
++ Activation layer (còn được gọi là Activations functions) (ReLU): Thay thế các đặc trưng xấu (bé hơn 0) bằng 0
 + Pooling layer: Có tác dụng giảm kích thước ảnh, giảm số lượng tham số cho model, ổn định hóa các đặc trưng (giữ lại các đặc trưng chính và giảm các chi tiết không cần thiết cho các layer tiếp theo)
 	+ MaxPooling: Tìm các đặc trưng nổi bật (Trả về giá trị lớn nhất của 1 vùng kernel)
 	+ AvgPooling: Giảm độ nhiễu của ảnh và làm mượt các đặc trưng bằng cách lấy giá trị trung bình, giúp tổng hợp thông tin toàn cục trước khi đưa vào lớp phân loại (Trả về giá trị 	trung bình cộng của 1 vùng kernel)
