@@ -52,6 +52,6 @@ class Logger:
         self.log.info(
             f"Predicted Prob: {pred_prob} - Predicted ID: {pred_id} - Predicted class: {pred_class}")
 
-    def log_response(self, x1, y1, x2, y2, confidence):
+    def log_detection(self, x1, y1, x2, y2, confidence):
         self.log.info(
             f"Detected: Box([{x1}, {y1}, {x2}, {y2}]) Conf: {confidence}")
