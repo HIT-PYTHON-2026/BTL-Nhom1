@@ -23,50 +23,79 @@ Mục tiêu của dự án là phát triển một hệ thống có khả năng 
         └── app
             └── config
                 ├── logging_cfg.py
-            └── logs
-                ├── http.log
-                ├── predictor.log
             └── middleware
                 ├── __init__.py
                 ├── cors.py
                 ├── http.py
             └── routers
+                ├── __init__.py
                 ├── base.py
                 ├── emotion_router.py
+                ├── game_ws_router.py
+                ├── redirect_router.py
+                ├── stream_router.py
             └── schemas
                 ├── emotion_schema.py
+                ├── face_schema.py
+            └── templates
+                ├── index.html
             └── utils
+                ├── __init__.py
+                ├── app_path.py
                 ├── logger.py
+                ├── utils.py
         └── src
             └── emotion_classification
-                └── __pycache__
                 └── config
+                    ├── detect_cfg.py
                     ├── emotion_cfg.py
                 └── models
                     └── weights
-                        ├── emtion_classification_weights.pt
+                        ├── emotion_classification_weights.pt
+                        ├── yolov8n-face-lindevs.pt
                     ├── emotion_predictor.py
                     ├── load_model.py
                     ├── resnet_model.py
+                    ├── yolo_detector.py
                 └── utils
                     ├── processor.py
                 ├── __init__.py
-                ├── server.py
-        ├── requirements.txt
+        └── templates
+            ├── index.html
+        ├── main.py
+        ├── server.py
     └── frontend
-        └── app_streamlit
-            ├── streamlit.py
+        └── css
+            ├── game.css
+            ├── home.css
+            ├── style.css
+        └── game
+            ├── game.js
+            ├── index.html
+            ├── style.css
+        └── js
+            ├── game.js
+            ├── script.js
+        ├── .env
         ├── app.py
-        ├── requirements.txt
+        ├── dashboard.html
+        ├── game.html
+        ├── index.html
     └── notebook
         ├── README.md
         ├── train_model.ipynb
     └── tests
         └── __pycache__
+            ├── __init__.cpython-313.pyc
+            ├── test_predictor.cpython-313.pyc
         ├── __init__.py
+        ├── test_predictor.py
     ├── .gitignore
     ├── .pdm-python
-    └── pyproject.toml
+    ├── pdm.lock
+    ├── pyproject.toml
+    ├── README.md
+    └── requirements.txt
 ```
 
 
@@ -75,16 +104,7 @@ Mục tiêu của dự án là phát triển một hệ thống có khả năng 
 ### Chức năng chính cho người dùng
 > * Tải ảnh/Sử dụng Camera
 > * Phân tích cảm xúc tức thời
-> * Lịch sử phân tích
-> * Gợi ý dựa trên cảm xúc
-> * Chia sẻ kết quả 
-
-### Chức năng quản trị viên (Nếu có)
-> * Quản lý bộ dữ liệu
-> * Giám sát hiệu năng mô hình
-> * Quản lý phiên bản mô hình
-> * Thống kê hệ thống
-> * Phê duyệt phản hồi
+> * Mini Game
 
 ## Demo sản phẩm
 
@@ -92,31 +112,34 @@ Mục tiêu của dự án là phát triển một hệ thống có khả năng 
 ----------------
 > * Tải ảnh
 
-![](/image.png)
+![](/upload.png)
+
+![](/result.png)
  
+> * Phân tích cảm xúc tức thời
 
- -  Quản trị viên:
-----------------
-> * Tải ảnh
+![](/realtime.png)
 
-![](/image.png)
+> * Mini Game
+
+![](/minigame.png)
 
  ## Các ngôn ngữ, công nghệ sử dụng
  > * Ngôn ngữ sử dụng: `Python`
  > * IDE sử dụng: `Visual Studio Code`
  > * Thư viện Deep Learning: `PyTorch`, `NumPy`, `Matplotlib`
  > * Thư viện xử lý hình ảnh: `Torchvision Transforms`
- > * Công cụ lập trình giao diện: `Streamlit`
+ > * Công cụ lập trình giao diện: `Html`, `Css`, `JavaScript`
  > * Công cụ quản lý môi trường và thư viện: `Conda`
  > * Công cụ quản lý phiên bản: `Git`
  > * Công cụ quản lý mã nguồn: `Github`
 
 ## Hướng dẫn cài đặt chương trình
 > * **Bước 1:** Clone project [Emotion_Classification](https://github.com/HIT-PYTHON-2026/BTL-Nhom1.git)
-> * **Bước 2:** Tạo và kích hoạt môi trường ảo `python -m venv venv`
+> * **Bước 2:** Tạo và kích hoạt môi trường ảo `conda create -n emotion-env python=3.11 -y`
 > * **Bước 3:** Cài đặt các thư viện cần thiết từ file cấu hình: `pip install -r requirements.txt`
-> * **Bước 4:** Sau đó di chuyển vào thư mục dự án: `cd frontend`
-> * **Bước 5:** Bước 5: Khởi chạy ứng dụng: `python app.py`
+> * **Bước 4:** Sau đó di chuyển vào thư mục dự án: `cd backend`
+> * **Bước 5:** Khởi chạy ứng dụng: `python server.py`
 > * ***Note:*** Xem file hướng dẫn cài đặt để hiểu rõ thêm: [File hướng dẫn chi tiết](https://docs.google.com/document/d/1o6tw7wAYEVP2A2WoEZ1EYq1Wg9a530sO8681uQ7o4z4/edit?usp=sharing)
 
 ## Tài liệu tham khảo

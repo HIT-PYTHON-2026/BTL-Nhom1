@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).parent))
 
 class EmotionDataConfig():
     N_CLASSES = 7
-    IMG_SIZE = 224
+    IMG_SIZE = 96
     CLASSES = ['Angry', 'Disgust', 'Fear',
                'Happy', 'Neutral', 'Sad', 'Suprise']
     ID2LABEL = {0: 'Angry', 1: 'Disgust', 2: 'Fear',
