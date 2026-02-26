@@ -1,6 +1,6 @@
 # 1. Tiền xử lý và tăng cường dữ liệu (Data Augmentation)
 Data train:
-+ Random Resized Crop: Cắt ngẫu nhiên một phần ảnh và resize về kích thước tiêu chuẩn (224x224). Giúp mô hình nhận diện được các đặc điểm khuôn mặt ngay cả khi không nằm chính giữa khung hình.
++ Random Resized Crop: Cắt ngẫu nhiên một phần ảnh và resize về kích thước tiêu chuẩn (96x96). Giúp mô hình nhận diện được các đặc điểm khuôn mặt ngay cả khi không nằm chính giữa khung hình.
 + Random Horizontal Flip: Lật ảnh ngang (tỉ lệ 50%) để xử lý sự đối xứng của khuôn mặt.
 + Color Jitter (p=0.8): Điều chỉnh ngẫu nhiên độ sáng, độ tương phản, độ bão hòa và sắc thái. Điều này giúp mô hình chống chọi với các điều kiện ánh sáng khác nhau.
 + Random Grayscale (p=0.2): Chuyển ảnh sang đen trắng giúp mô hình tập trung vào hình thái (shapes) thay vì quá phụ thuộc vào màu sắc.
