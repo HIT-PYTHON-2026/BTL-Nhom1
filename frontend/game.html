@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Express — Mini Game</title>
+    <meta name="description" content="Camera-interactive emotion recognition mini-game">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Chakra+Petch:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+
+<body>
+
+    <!-- Bottom Layer — Live Webcam Feed -->
+    <video id="webcam" autoplay playsinline></video>
+
+    <!-- Top Layer — Game Canvas (transparent) -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD Overlay (HTML for crisp text) -->
+    <div class="hud" id="hud">
+        <div class="hud-left">
+            <span class="hud-label">🚂 EMOTION EXPRESS</span>
+            <span class="hud-round" id="hud-round">Vòng 1</span>
+        </div>
+        <div class="hud-center">
+            <span class="hud-gate" id="hud-gate">Cổng: 0 / 3</span>
+        </div>
+        <div class="hud-right">
+            <span class="hud-emotion" id="hud-emotion">😐 Đang nhận diện...</span>
+            <button class="hud-stop" id="btn-stop" title="Dừng chơi">⏹ Dừng</button>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div class="overlay" id="start-screen">
+        <div class="overlay-box">
+            <h1 class="game-title">🚂 Emotion Express</h1>
+            <p class="game-subtitle">Thể hiện cảm xúc để vượt qua các cổng!</p>
+            <div class="instructions">
+                <div class="instruction-item">😢 <span>Sad Gate</span></div>
+                <div class="instruction-item">😄 <span>Happy Gate</span></div>
+                <div class="instruction-item">😲 <span>Surprised Gate</span></div>
+            </div>
+            <button class="btn-start" id="btn-start">▶ BẮT ĐẦU</button>
+            <a href="index.html" class="btn-home-link">🏠 Về trang chủ</a>
+        </div>
+    </div>
+
+    <!-- Round Complete Screen (hidden) -->
+    <div class="overlay" id="round-complete-screen" style="display:none;">
+        <div class="overlay-box round-complete-box">
+            <div class="round-emoji">🎉</div>
+            <h1 class="round-title" id="round-title">VÒNG 1 HOÀN THÀNH!</h1>
+            <p class="round-info" id="round-info">Vòng tiếp theo: 5 chướng ngại vật</p>
+            <p class="round-question">Bạn có muốn chơi tiếp không?</p>
+            <div class="round-buttons">
+                <button class="btn-continue" id="btn-continue">▶ CHƠI TIẾP</button>
+                <button class="btn-quit" id="btn-quit">🏠 VỀ TRANG CHỦ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Screen (hidden) -->
+    <div class="overlay overlay-win" id="win-screen" style="display:none;">
+        <div class="overlay-box win-box">
+            <div class="win-emoji">🏆</div>
+            <h1 class="win-title">CONGRATULATIONS!</h1>
+            <h2 class="win-subtitle">YOU ARE AN EMOTION MASTER!</h2>
+            <div class="win-stars">⭐ ⭐ ⭐</div>
+            <button class="btn-start" id="btn-restart">🔄 CHƠI LẠI</button>
+            <a href="index.html" class="btn-home-link">🏠 Về trang chủ</a>
+        </div>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+
+</html>

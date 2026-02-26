@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test WebSocket</title>
+</head>
+
+<body>
+    <img id="frame" src="" alt="">
+    <script>
+        let protocol = window.location.protocol == "https:" ? "wss://" : "ws://";
+        let wsUrl = protocol + window.location.host + window.location.pathname + "ws";
+
+        let ws = new WebSocket(wsUrl);
+        let image = document.getElementById("frame");
+        
+        image.onload = function () {
+            URL.revokeObjectURL(this.src);
+        }
+        ws.onmessage = function (event) {
+            image.src = URL.createObjectURL(event.data)
+        };
+    </script>
+</body>
+
+</html>

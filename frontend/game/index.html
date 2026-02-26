@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Express 🚂</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Bottom Layer: Webcam Video Stream -->
+    <video id="webcam" autoplay playsinline muted></video>
+
+    <!-- Top Layer: Game Canvas (transparent) -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Start Overlay -->
+    <div id="startOverlay" class="overlay">
+        <div class="overlay-content">
+            <h1 class="game-title">🚂 Emotion Express</h1>
+            <p class="game-desc">Match your facial expression to pass through each emotion gate!</p>
+            <div class="emotion-preview">
+                <span class="preview-item" style="--c:#42A5F5">😢 Sad</span>
+                <span class="preview-item" style="--c:#FFCA28">😃 Happy</span>
+                <span class="preview-item" style="--c:#AB47BC">😮 Surprised</span>
+            </div>
+            <button id="startBtn" class="btn-glow">START GAME</button>
+        </div>
+    </div>
+
+    <!-- Victory Overlay -->
+    <div id="victoryOverlay" class="overlay hidden">
+        <canvas id="confettiCanvas"></canvas>
+        <div class="overlay-content victory">
+            <h1 class="victory-title">🎉 CONGRATULATIONS!</h1>
+            <p class="victory-text">YOU ARE AN EMOTION MASTER!</p>
+            <button id="restartBtn" class="btn-glow">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <div class="hud-card">
+            <span class="hud-label">Gates Passed</span>
+            <span id="scoreDisplay" class="hud-value">0 / 3</span>
+        </div>
+        <div class="hud-card">
+            <span class="hud-label">Detected</span>
+            <span id="emotionDisplay" class="hud-value">---</span>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

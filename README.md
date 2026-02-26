@@ -1,1 +1,147 @@
-# BTL Nhom 1 - Emotion Classification
+# Bài toán phân loại cảm xúc - Emotion classification
+
+## Giới thiệu bài toán
+Phân loại cảm xúc qua hình ảnh là quá trình sử dụng các thuật toán máy tính để nhận diện biểu cảm khuôn mặt và gán chúng vào các trạng thái tâm lý tương ứng. Đây là bài toán kết hợp giữa xử lý ảnh và học sâu (Deep Learning).
+
+## Mục tiêu Bài toán
+
+Mục tiêu của dự án là phát triển một hệ thống có khả năng tự động trích xuất đặc trưng khuôn mặt và phân loại cảm xúc từ hình ảnh/video đầu vào. Bên cạnh đó, dự án còn là cơ hội để nhóm sinh viên nghiên cứu và làm chủ các kiến thức chuyên sâu về Deep Learning, xử lý ảnh, quy trình phát triển phần mềm và tư duy giải quyết vấn đề.
+
+## Nhóm thực hiện: Nhóm 1
+
+| STT  | Họ tên           | Facebook                                                 |
+| :--- | :--------------- | :------------------------------------------------------- |
+| 1    | Trần Văn Sơn     | [Sơn Trần](https://www.facebook.com/son.tran.384324)     |
+| 2    | Hoàng Thanh Diệu | [Diệu Hoàng](https://www.facebook.com/dieu.hoang.12457/) |
+| 3    | Vũ Trang Ngân    | [Trang Ngân](https://www.facebook.com/nony.mous.77736)   |
+
+## Cấu trúc thư mục
+[Project Structure](/notebook/ProjectStructure.md)
+```
+└── BTL-Nhom1
+    └── backend
+        └── app
+            └── config
+                ├── logging_cfg.py
+            └── middleware
+                ├── __init__.py
+                ├── cors.py
+                ├── http.py
+            └── routers
+                ├── __init__.py
+                ├── base.py
+                ├── emotion_router.py
+                ├── game_ws_router.py
+                ├── redirect_router.py
+                ├── stream_router.py
+            └── schemas
+                ├── emotion_schema.py
+                ├── face_schema.py
+            └── templates
+                ├── index.html
+            └── utils
+                ├── __init__.py
+                ├── app_path.py
+                ├── logger.py
+                ├── utils.py
+        └── src
+            └── emotion_classification
+                └── config
+                    ├── detect_cfg.py
+                    ├── emotion_cfg.py
+                └── models
+                    └── weights
+                        ├── emotion_classification_weights.pt
+                        ├── yolov8n-face-lindevs.pt
+                    ├── emotion_predictor.py
+                    ├── load_model.py
+                    ├── resnet_model.py
+                    ├── yolo_detector.py
+                └── utils
+                    ├── processor.py
+                ├── __init__.py
+        └── templates
+            ├── index.html
+        ├── main.py
+        ├── server.py
+    └── frontend
+        └── css
+            ├── game.css
+            ├── home.css
+            ├── style.css
+        └── game
+            ├── game.js
+            ├── index.html
+            ├── style.css
+        └── js
+            ├── game.js
+            ├── script.js
+        ├── .env
+        ├── app.py
+        ├── dashboard.html
+        ├── game.html
+        ├── index.html
+    └── notebook
+        ├── README.md
+        ├── train_model.ipynb
+    └── tests
+        └── __pycache__
+            ├── __init__.cpython-313.pyc
+            ├── test_predictor.cpython-313.pyc
+        ├── __init__.py
+        ├── test_predictor.py
+    ├── .gitignore
+    ├── .pdm-python
+    ├── pdm.lock
+    ├── pyproject.toml
+    ├── README.md
+    └── requirements.txt
+```
+
+
+## Các chức năng chính
+
+### Chức năng chính cho người dùng
+> * Tải ảnh/Sử dụng Camera
+> * Phân tích cảm xúc tức thời
+> * Mini Game
+
+## Demo sản phẩm
+
+-  Người dùng:
+----------------
+> * Tải ảnh
+
+![](/upload.png)
+
+![](/result.png)
+ 
+> * Phân tích cảm xúc tức thời
+
+![](/realtime.png)
+
+> * Mini Game
+
+![](/minigame.png)
+
+ ## Các ngôn ngữ, công nghệ sử dụng
+ > * Ngôn ngữ sử dụng: `Python`
+ > * IDE sử dụng: `Visual Studio Code`
+ > * Thư viện Deep Learning: `PyTorch`, `NumPy`, `Matplotlib`
+ > * Thư viện xử lý hình ảnh: `Torchvision Transforms`
+ > * Công cụ lập trình giao diện: `Html`, `Css`, `JavaScript`
+ > * Công cụ quản lý môi trường và thư viện: `Conda`
+ > * Công cụ quản lý phiên bản: `Git`
+ > * Công cụ quản lý mã nguồn: `Github`
+
+## Hướng dẫn cài đặt chương trình
+> * **Bước 1:** Clone project [Emotion_Classification](https://github.com/HIT-PYTHON-2026/BTL-Nhom1.git)
+> * **Bước 2:** Tạo và kích hoạt môi trường ảo `conda create -n emotion-env python=3.11 -y`
+> * **Bước 3:** Cài đặt các thư viện cần thiết từ file cấu hình: `pip install -r requirements.txt`
+> * **Bước 4:** Sau đó di chuyển vào thư mục dự án: `cd backend`
+> * **Bước 5:** Khởi chạy ứng dụng: `python server.py`
+> * ***Note:*** Xem file hướng dẫn cài đặt để hiểu rõ thêm: [File hướng dẫn chi tiết](https://docs.google.com/document/d/1o6tw7wAYEVP2A2WoEZ1EYq1Wg9a530sO8681uQ7o4z4/edit?usp=sharing)
+
+## Tài liệu tham khảo
+
+- [Các phương pháp đánh giá một hệ thống phân lớp](https://machinelearningcoban.com/2017/08/31/evaluation/)

@@ -220,6 +220,7 @@ __marimo__/
 backend/src/emotion_classification/models/weights/*
 
 backend/cache/
+backend/captured_images/
 
 frontend/.gradio/
 
