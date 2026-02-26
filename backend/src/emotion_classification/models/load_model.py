@@ -6,9 +6,8 @@ import requests
 
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
-# https://drive.google.com/file/d/12gb4yspu3eOo-qpCGwAQmXF5SVz6LFBg/view?usp=drive_link
-# FILE_ID = "1ojjbBCgGtWeBIJHjWj5J7DEMdngkItDD"
-FILE_ID = "12gb4yspu3eOo-qpCGwAQmXF5SVz6LFBg"
+# https://drive.google.com/file/d/1Ln4LKFfEW6W0HYWpPrbRfE6LY1t9WTBJ/view?usp=sharing
+FILE_ID = "1Ln4LKFfEW6W0HYWpPrbRfE6LY1t9WTBJ"
 CURRENT_DIR = Path(__file__).parent
 WEIGHTS_DIR = CURRENT_DIR / 'weights'
 RESNET_MODEL_WEIGHT = WEIGHTS_DIR/'emotion_classification_weights.pt'
