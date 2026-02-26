@@ -28,6 +28,7 @@ const previewContainer = document.getElementById('preview-container');
 const uploadedImg = document.getElementById('uploaded-image');
 const canvas = document.getElementById('detection-canvas');
 const btnAnalyze = document.getElementById('btn-analyze');
+const btnReupload = document.getElementById('btn-reupload');
 const emotionBars = document.getElementById('emotion-bars');
 const procTimeEl = document.getElementById('proc-time');
 const modelNameEl = document.getElementById('model-name');
@@ -89,9 +90,28 @@ function handleFileSelected(file) {
     };
     reader.readAsDataURL(file);
 
-    // Enable analyze button
+    // Enable analyze button & show reupload button
     btnAnalyze.disabled = false;
+    btnReupload.style.display = 'flex';
     clearResults();
+}
+
+// --- Reupload button: reset to initial state ---
+btnReupload.addEventListener('click', resetUpload);
+
+function resetUpload() {
+    currentFile = null;
+    fileInput.value = '';
+    uploadedImg.src = '';
+    previewContainer.style.display = 'none';
+    dropZone.style.display = '';
+    btnAnalyze.disabled = true;
+    btnReupload.style.display = 'none';
+    clearResults();
+
+    // Clear canvas
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 // --- Analyze button ---
@@ -103,39 +123,47 @@ btnAnalyze.addEventListener('click', () => {
 async function analyzeImage(file) {
     btnAnalyze.disabled = true;
     btnAnalyze.querySelector('span')?.remove();
-    const origHTML = btnAnalyze.innerHTML;
     btnAnalyze.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Đang phân tích...';
     lucide.createIcons();
 
     const startTime = performance.now();
 
-    const formData = new FormData();
-    formData.append('file_upload', file);
-
-    // We need a second formData for predict since each can only be consumed once
-    const formData2 = new FormData();
-    formData2.append('file_upload', file);
-
     try {
-        const [detectRes, predictRes] = await Promise.all([
-            fetch(`${API_BASE}/detect`, { method: 'POST', body: formData }),
-            fetch(`${API_BASE}/predict`, { method: 'POST', body: formData2 })
-        ]);
+        const formData = new FormData();
+        formData.append('file_upload', file);
 
-        const detectData = await detectRes.json();
-        const predictData = await predictRes.json();
+        const res = await fetch(`${API_BASE}/analyze`, { method: 'POST', body: formData });
+        const data = await res.json();
 
         const elapsed = Math.round(performance.now() - startTime);
 
-        // Draw bounding boxes from detect
-        drawDetections(detectData.results || []);
+        // Nếu không phát hiện khuôn mặt
+        if (!data.faces || data.faces.length === 0) {
+            emotionBars.innerHTML = `
+                <div style="text-align:center; padding:20px 0;">
+                    <div style="font-size:2.5rem; margin-bottom:8px;">😶</div>
+                    <p style="color:#f59e0b; font-weight:600; font-size:.95rem;">Không phát hiện khuôn mặt</p>
+                    <p style="color:#94a3b8; font-size:.8rem; margin-top:4px;">Vui lòng tải lên ảnh có khuôn mặt rõ ràng</p>
+                </div>
+            `;
+            procTimeEl.textContent = `${elapsed}ms`;
+            modelNameEl.textContent = '—';
 
-        // Show emotion probabilities from predict
-        renderEmotionBars(predictData.probs || [], predictData.predicted_class);
+            btnAnalyze.innerHTML = '<i data-lucide="scan-face"></i> Phân tích';
+            lucide.createIcons();
+            btnAnalyze.disabled = false;
+            return;
+        }
+
+        // Vẽ bounding boxes với emotion labels
+        drawDetections(data.faces);
+
+        // Hiển thị kết quả per-face
+        renderMultiFaceResults(data.faces);
 
         // Footer info
         procTimeEl.textContent = `${elapsed}ms`;
-        modelNameEl.textContent = predictData.predictor_name || 'ResNet18';
+        modelNameEl.textContent = data.predictor_name || 'ResNet18';
 
     } catch (err) {
         console.error(err);
@@ -147,9 +175,8 @@ async function analyzeImage(file) {
     btnAnalyze.disabled = false;
 }
 
-// --- Draw face bounding boxes on canvas ---
+// --- Draw face bounding boxes with emotion labels on canvas ---
 function drawDetections(faces) {
-    // Wait for image to be rendered
     requestAnimationFrame(() => {
         canvas.width = uploadedImg.clientWidth;
         canvas.height = uploadedImg.clientHeight;
@@ -160,23 +187,24 @@ function drawDetections(faces) {
         const scaleY = canvas.height / uploadedImg.naturalHeight;
 
         faces.forEach(face => {
-            // face is a tuple: [x1, y1, x2, y2, conf]
-            const [x1, y1, x2, y2, conf] = face;
+            const [x1, y1, x2, y2] = face.box;
             const rx = x1 * scaleX;
             const ry = y1 * scaleY;
             const rw = (x2 - x1) * scaleX;
             const rh = (y2 - y1) * scaleY;
 
+            const emotionColor = EMOTION_COLORS[face.predicted_class] || '#6366f1';
+
             // Draw rectangle
-            ctx.strokeStyle = '#6366f1';
+            ctx.strokeStyle = emotionColor;
             ctx.lineWidth = 2.5;
             ctx.strokeRect(rx, ry, rw, rh);
 
-            // Label badge
-            const label = 'FACE DETECTED';
+            // Label badge with emotion
+            const label = `#${face.face_id} ${face.predicted_class} ${Math.round(face.best_prob * 100)}%`;
             ctx.font = '600 11px Inter, sans-serif';
             const textW = ctx.measureText(label).width + 12;
-            ctx.fillStyle = '#6366f1';
+            ctx.fillStyle = emotionColor;
             ctx.beginPath();
             ctx.roundRect(rx, ry - 22, textW, 20, 4);
             ctx.fill();
@@ -186,31 +214,51 @@ function drawDetections(faces) {
     });
 }
 
-// --- Render emotion bars ---
-function renderEmotionBars(probs, predictedClass) {
-    if (!probs || probs.length === 0) return;
+// --- Render per-face emotion results ---
+function renderMultiFaceResults(faces) {
+    if (!faces || faces.length === 0) return;
 
-    // probs order: Angry, Disgust, Fear, Happy, Neutral, Sad, Surprise (matches EmotionDataConfig.CLASSES)
     let html = '';
-    probs.forEach((p, i) => {
-        const name = EMOTION_CLASSES[i] || `Class ${i}`;
-        const color = EMOTION_COLORS[name] || '#6366f1';
-        const pct = Math.round(p * 100);
+
+    faces.forEach(face => {
+        const emotionColor = EMOTION_COLORS[face.predicted_class] || '#6366f1';
+        const pctBest = Math.round(face.best_prob * 100);
+
         html += `
-            <div class="emotion-item">
-                <div class="emotion-label">
-                    <span class="name">
-                        <span class="dot-sm" style="background:${color}"></span>
-                        ${name}
+            <div class="face-result-section">
+                <div class="face-result-header">
+                    <span class="face-badge" style="background:${emotionColor}">
+                        Khuôn mặt #${face.face_id}
                     </span>
-                    <span class="pct">${pct}%</span>
+                    <span class="face-emotion" style="color:${emotionColor}">
+                        ${face.predicted_class} — ${pctBest}%
+                    </span>
                 </div>
-                <div class="bar-bg">
-                    <div class="bar-fill" style="width:${pct}%;background:${color};"></div>
-                </div>
-            </div>
         `;
+
+        face.probs.forEach((p, i) => {
+            const name = EMOTION_CLASSES[i] || `Class ${i}`;
+            const color = EMOTION_COLORS[name] || '#6366f1';
+            const pct = Math.round(p * 100);
+            html += `
+                <div class="emotion-item">
+                    <div class="emotion-label">
+                        <span class="name">
+                            <span class="dot-sm" style="background:${color}"></span>
+                            ${name}
+                        </span>
+                        <span class="pct">${pct}%</span>
+                    </div>
+                    <div class="bar-bg">
+                        <div class="bar-fill" style="width:${pct}%;background:${color};"></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
     });
+
     emotionBars.innerHTML = html;
 }
 
@@ -222,43 +270,178 @@ function clearResults() {
 
 
 /* ===========================================================
-   2. REALTIME WEBCAM STREAM (WebSocket)
+   2. REALTIME WEBCAM STREAM (WebSocket) — Server & Client
    =========================================================== */
 
+// Camera source: 'server' or 'client'
+let cameraSource = 'server';
+let clientStream = null;   // MediaStream from getUserMedia
+let captureInterval = null; // setInterval ID for frame capture
+
+const btnSourceServer = document.getElementById('btn-source-server');
+const btnSourceClient = document.getElementById('btn-source-client');
+const clientVideo = document.getElementById('client-video');
+const clientCanvas = document.getElementById('client-canvas');
+
+// --- Camera source toggle ---
+btnSourceServer.addEventListener('click', () => switchSource('server'));
+btnSourceClient.addEventListener('click', () => switchSource('client'));
+
+function switchSource(source) {
+    if (source === cameraSource) return;
+
+    // Stop current stream if running
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        stopStream();
+    }
+
+    cameraSource = source;
+
+    // Update active button styling
+    btnSourceServer.classList.toggle('active', source === 'server');
+    btnSourceClient.classList.toggle('active', source === 'client');
+
+    addLogEntry(`Chuyển sang camera: ${source === 'server' ? 'Server' : 'Client'}`, '#818cf8');
+}
+
+// --- Toggle stream button ---
 btnToggle.addEventListener('click', toggleStream);
 
 function toggleStream() {
     if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close();
+        stopStream();
     } else {
-        const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        socket = new WebSocket(`${wsProto}//${window.location.host}/v1/emotion_classification/ws`);
-        socket.binaryType = 'blob';
-
-        socket.onopen = () => {
-            btnToggleText.textContent = 'Dừng Camera';
-            btnToggle.classList.add('streaming');
-            updateOverlay('Đang kết nối...');
-            clearLog();
-        };
-
-        socket.onmessage = (event) => {
-            const url = URL.createObjectURL(event.data);
-            streamImg.src = url;
-            streamImg.onload = () => URL.revokeObjectURL(url);
-        };
-
-        socket.onclose = () => {
-            btnToggleText.textContent = 'Bắt đầu Camera';
-            btnToggle.classList.remove('streaming');
-            hideOverlay();
-            streamImg.src = '';
-        };
-
-        socket.onerror = () => {
-            addLogEntry('Lỗi kết nối WebSocket', '#ef4444');
-        };
+        if (cameraSource === 'server') {
+            startServerStream();
+        } else {
+            startClientStream();
+        }
     }
+}
+
+// --- Server camera mode ---
+function startServerStream() {
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    socket = new WebSocket(`${wsProto}//${window.location.host}/v1/emotion_classification/ws`);
+    socket.binaryType = 'blob';
+
+    socket.onopen = () => {
+        btnToggleText.textContent = 'Dừng Camera';
+        btnToggle.classList.add('streaming');
+        updateOverlay('📡 Server Camera');
+        clearLog();
+        addLogEntry('Kết nối Server Camera thành công', '#22c55e');
+    };
+
+    socket.onmessage = (event) => {
+        const url = URL.createObjectURL(event.data);
+        streamImg.src = url;
+        streamImg.onload = () => URL.revokeObjectURL(url);
+    };
+
+    socket.onclose = () => {
+        onStreamStopped();
+    };
+
+    socket.onerror = () => {
+        addLogEntry('Lỗi kết nối WebSocket (Server)', '#ef4444');
+    };
+}
+
+// --- Client camera mode ---
+async function startClientStream() {
+    try {
+        // Request browser camera access
+        clientStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+        });
+        clientVideo.srcObject = clientStream;
+        await clientVideo.play();
+
+        addLogEntry('Camera Client đã mở', '#22c55e');
+    } catch (err) {
+        addLogEntry(`Không thể truy cập camera: ${err.message}`, '#ef4444');
+        return;
+    }
+
+    // Connect to client WebSocket endpoint
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    socket = new WebSocket(`${wsProto}//${window.location.host}/v1/emotion_classification/ws-client`);
+    socket.binaryType = 'blob';
+
+    socket.onopen = () => {
+        btnToggleText.textContent = 'Dừng Camera';
+        btnToggle.classList.add('streaming');
+        updateOverlay('📱 Client Camera');
+        clearLog();
+        addLogEntry('Kết nối Client Camera thành công', '#22c55e');
+
+        // Start capturing frames and sending them
+        startFrameCapture();
+    };
+
+    socket.onmessage = (event) => {
+        // Receive annotated frame from server
+        const url = URL.createObjectURL(event.data);
+        streamImg.src = url;
+        streamImg.onload = () => URL.revokeObjectURL(url);
+    };
+
+    socket.onclose = () => {
+        onStreamStopped();
+    };
+
+    socket.onerror = () => {
+        addLogEntry('Lỗi kết nối WebSocket (Client)', '#ef4444');
+    };
+}
+
+function startFrameCapture() {
+    const ctx = clientCanvas.getContext('2d');
+
+    captureInterval = setInterval(() => {
+        if (!clientVideo.videoWidth || !socket || socket.readyState !== WebSocket.OPEN) return;
+
+        clientCanvas.width = clientVideo.videoWidth;
+        clientCanvas.height = clientVideo.videoHeight;
+        ctx.drawImage(clientVideo, 0, 0);
+
+        const dataUrl = clientCanvas.toDataURL('image/jpeg', 0.7);
+        socket.send(dataUrl);
+    }, 100); // ~10 FPS
+}
+
+// --- Stop everything ---
+function stopStream() {
+    // Close WebSocket
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
+
+    // Stop client camera if active
+    stopClientCamera();
+
+    onStreamStopped();
+}
+
+function stopClientCamera() {
+    if (captureInterval) {
+        clearInterval(captureInterval);
+        captureInterval = null;
+    }
+    if (clientStream) {
+        clientStream.getTracks().forEach(track => track.stop());
+        clientStream = null;
+    }
+    clientVideo.srcObject = null;
+}
+
+function onStreamStopped() {
+    btnToggleText.textContent = 'Bắt đầu Camera';
+    btnToggle.classList.remove('streaming');
+    hideOverlay();
+    streamImg.src = '';
 }
 
 // --- Overlay on video ---
